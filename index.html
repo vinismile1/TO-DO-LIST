@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>To-Do List (CRUD)</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      margin: 0;
+      padding: 40px;
+      background-image: url(https://cdn.pixabay.com/photo/2018/04/28/22/03/tree-3358468_1280.jpg);
+    }
+    .todo-container {
+      backdrop-filter: blur(10px);  
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+      width: 400px;
+    }
+    h1 {
+      text-align: center;
+      color: #000000;
+    }
+    input[type="text"] {
+      width: 70%;
+      padding: 10px;
+      border: 1px solid #cccccc00;
+      border-radius: 8px;
+      margin-right: 5px;
+    }
+    button {
+      padding: 6px 10px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button.add-btn {
+      background-color: #4CAF50;
+      color: white;
+    }
+    button.add-btn:hover {
+      background-color: #45a049;
+    }
+    ul {
+      list-style-type: none;
+      padding: 0;
+      margin-top: 20px;
+    }
+    li {
+      padding: 10px;
+      background: #f1f1f1;
+      margin-bottom: 8px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    li.completed span {
+      text-decoration: line-through;
+      color: gray;
+    }
+    .btn-group {
+      display: flex;
+      gap: 5px;
+    }
+    button.done-btn:hover {
+      background-color:  rgb(47, 161, 255); 
+     }
+    .done-btn { background: rgb(113, 191, 255); color: white; }
+    button.edit-btn:hover {
+      background-color:   rgb(255, 166, 0); 
+    }
+    .edit-btn { background: rgb(250, 184, 60); color: white; }
+    button.delete-btn:hover {
+      background-color:   rgb(255, 1, 1); 
+    }
+    .delete-btn { background: rgb(255, 60, 60); color: white; }
+  </style>
+</head>
+<body>
+  <div class="todo-container">
+    <h1>My To-Do List</h1>
+    <form id="taskForm">
+      <input type="text" id="taskInput" placeholder="Add new task...">
+      <button type="submit" class="add-btn">Add</button>
+    </form>
+    <ul id="taskList"></ul>
+  </div>
+
+  <script>
+    const form = document.getElementById("taskForm");
+    const input = document.getElementById("taskInput");
+    const taskList = document.getElementById("taskList");
+
+    // Load tasks from localStorage when page loads
+    window.onload = function() {
+      let savedTasks = JSON.parse(localStorage.getItem("tasks")) || [];
+      savedTasks.forEach(task => {
+        createTaskElement(task.text, task.completed);
+      });
+    };
+
+    form.addEventListener("submit", function(event) {
+      event.preventDefault(); 
+      addTask();
+    });
+
+    function addTask() {
+      let taskText = input.value.trim();
+      if (taskText === "") return;
+
+      createTaskElement(taskText, false);
+      saveTasks();
+
+      input.value = "";
+    }
+
+    function createTaskElement(taskText, completed) {
+      let li = document.createElement("li");
+
+      let span = document.createElement("span");
+      span.textContent = taskText;
+
+      if (completed) li.classList.add("completed");
+
+      // Button group
+      let btnGroup = document.createElement("div");
+      btnGroup.className = "btn-group";
+
+      // Done button
+      let doneBtn = document.createElement("button");
+      doneBtn.textContent = "Done";
+      doneBtn.className = "done-btn";
+      doneBtn.onclick = function(e) {
+        e.stopPropagation();
+        li.classList.toggle("completed");
+        saveTasks();
+      };
+
+      // Edit button
+      let editBtn = document.createElement("button");
+      editBtn.textContent = "Edit";
+      editBtn.className = "edit-btn";
+      editBtn.onclick = function(e) {
+        e.stopPropagation();
+        editTask(li, span);
+      };
+
+      // Delete button
+      let deleteBtn = document.createElement("button");
+      deleteBtn.textContent = "X";
+      deleteBtn.className = "delete-btn";
+      deleteBtn.onclick = function(e) {
+        e.stopPropagation();
+        li.remove();
+        saveTasks();
+      };
+
+      btnGroup.appendChild(doneBtn);
+      btnGroup.appendChild(editBtn);
+      btnGroup.appendChild(deleteBtn);
+
+      li.appendChild(span);
+      li.appendChild(btnGroup);
+      taskList.appendChild(li);
+    }
+
+    function editTask(li, span) {
+      let currentText = span.textContent;
+
+      // Create input box
+      let inputBox = document.createElement("input");
+      inputBox.type = "text";
+      inputBox.value = currentText;
+
+      // Replace span with input
+      li.replaceChild(inputBox, span);
+
+      // Save on Enter or when input loses focus
+      inputBox.addEventListener("blur", saveEdit);
+      inputBox.addEventListener("keypress", function(e) {
+        if (e.key === "Enter") saveEdit();
+      });
+
+      function saveEdit() {
+        let newText = inputBox.value.trim() || currentText;
+        span.textContent = newText;
+        li.replaceChild(span, inputBox);
+        saveTasks();
+      }
+    }
+
+    function saveTasks() {
+      let tasks = [];
+      document.querySelectorAll("#taskList li").forEach(li => {
+        tasks.push({
+          text: li.querySelector("span").textContent,
+          completed: li.classList.contains("completed")
+        });
+      });
+      localStorage.setItem("tasks", JSON.stringify(tasks));
+    }
+  </script>
+</body>
+</html>
